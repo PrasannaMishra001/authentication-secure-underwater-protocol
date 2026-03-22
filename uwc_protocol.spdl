@@ -1,0 +1,85 @@
+protocol UWCFull(UWS, SUB, BUOY, SAT, BS)
+{
+role UWS
+{
+    fresh Nu: Nonce;
+    var Ns: Nonce;
+
+    send_1(UWS, SUB, {UWS, Nu}k(UWS,SUB));
+    recv_2(SUB, UWS, {SUB, UWS, Nu, Ns}k(UWS,SUB));
+
+    claim(UWS, Alive);
+    claim(UWS, Niagree);
+    claim(UWS, Secret, Nu);
+}
+
+role SUB
+{
+    var Nu: Nonce;
+    fresh Ns: Nonce;
+    var Nb: Nonce;
+
+    recv_1(UWS, SUB, {UWS, Nu}k(UWS,SUB));
+    send_2(SUB, UWS, {SUB, UWS, Nu, Ns}k(UWS,SUB));
+
+    send_3(SUB, BUOY, {SUB, UWS, Nu, Ns}k(SUB,BUOY));
+    recv_4(BUOY, SUB, {BUOY, SUB, UWS, Nu, Ns, Nb}k(SUB,BUOY));
+
+    claim(SUB, Alive);
+    claim(SUB, Niagree);
+    claim(SUB, Secret, Ns);
+}
+
+role BUOY
+{
+    var Nu: Nonce;
+    var Ns: Nonce;
+    fresh Nb: Nonce;
+    var Nsat: Nonce;
+
+    recv_3(SUB, BUOY, {SUB, UWS, Nu, Ns}k(SUB,BUOY));
+    send_4(BUOY, SUB, {BUOY, SUB, UWS, Nu, Ns, Nb}k(SUB,BUOY));
+
+    send_5(BUOY, SAT, {BUOY, SUB, UWS, Nu, Ns, Nb}k(BUOY,SAT));
+    recv_6(SAT, BUOY, {SAT, BUOY, SUB, UWS, Nu, Ns, Nb, Nsat}k(BUOY,SAT));
+
+    claim(BUOY, Alive);
+    claim(BUOY, Niagree);
+    claim(BUOY, Secret, Nb);
+}
+
+role SAT
+{
+    var Nu: Nonce;
+    var Ns: Nonce;
+    var Nb: Nonce;
+    fresh Nsat: Nonce;
+    var Nbs: Nonce;
+
+    recv_5(BUOY, SAT, {BUOY, SUB, UWS, Nu, Ns, Nb}k(BUOY,SAT));
+    send_6(SAT, BUOY, {SAT, BUOY, SUB, UWS, Nu, Ns, Nb, Nsat}k(BUOY,SAT));
+
+    send_7(SAT, BS, {SAT, BUOY, SUB, UWS, Nu, Ns, Nb, Nsat}k(SAT,BS));
+    recv_8(BS, SAT, {BS, SAT, BUOY, SUB, UWS, Nu, Ns, Nb, Nsat, Nbs}k(SAT,BS));
+
+    claim(SAT, Alive);
+    claim(SAT, Niagree);
+    claim(SAT, Secret, Nsat);
+}
+
+role BS
+{
+    var Nu: Nonce;
+    var Ns: Nonce;
+    var Nb: Nonce;
+    var Nsat: Nonce;
+    fresh Nbs: Nonce;
+
+    recv_7(SAT, BS, {SAT, BUOY, SUB, UWS, Nu, Ns, Nb, Nsat}k(SAT,BS));
+    send_8(BS, SAT, {BS, SAT, BUOY, SUB, UWS, Nu, Ns, Nb, Nsat, Nbs}k(SAT,BS));
+
+    claim(BS, Alive);
+    claim(BS, Niagree);
+    claim(BS, Secret, Nbs);
+}
+}
