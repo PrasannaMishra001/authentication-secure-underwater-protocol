@@ -140,22 +140,22 @@ Each hop generates a **fresh nonce** and validates the **timestamp** (`|current_
 
 ---
 
-## Base Paper Implementation
+## Team Implementation
 
-The original implementation by Prasun Baranwal ([prasu-baran/authentication-secure-underwater-protocol](https://github.com/prasu-baran/authentication-secure-underwater-protocol)) provided a working prototype of the protocol with:
+Our team implemented the protocol from the base paper and built a complete working prototype with:
 
 - ECC key generation and ECDH shared secret derivation using tinyec
 - Node registration with SHA-256 hash-based identifiers
 - Multi-hop authentication simulation across UWS-SUB-BUOY-SAT-BS
 - Dynamic fallback when a buoy node fails
 - Basic output graphs (delay, energy, communication cost vs. node count)
-- Scyther SPDL specification (with some failing claims)
+- Scyther SPDL specification and iterative claim fixing
 
 ---
 
-## Improvements Over Base Implementation
+## Improvements Over Initial Team Version
 
-This fork introduces seven concrete improvements to bring the simulation closer to the paper's design and to produce more realistic, differentiated results.
+We introduced seven concrete improvements to bring the simulation closer to the paper's design and to produce more realistic, differentiated results.
 
 ### Improvement 1: AES-GCM Authenticated Encryption
 
@@ -386,7 +386,7 @@ Delay is computed using Thorp's acoustic absorption model averaged over multiple
 
 ![Energy vs Nodes](output_energy.png)
 
-Energy per authentication cycle follows `E = 48.8 + 0.1 * N` uJ, where 48.8 uJ is the fixed cryptographic cost (ECC + SHA-256 + AES-GCM) and 0.1*N accounts for routing table maintenance overhead. The linear relationship is deterministic. Reference lines show Ref [22] at 2300 uJ and Ref [24] at 280 uJ, demonstrating the protocol's energy advantage.
+Energy per authentication cycle follows `E = 48.8 + 0.1 * N` uJ, where 48.8 uJ is the fixed cryptographic cost (ECC + SHA-256 + AES-GCM) and 0.1*N accounts for routing table maintenance overhead. The linear relationship is deterministic. Reference lines show baseline schemes labeled Ref [22] (2300 uJ) and Ref [24] (280 uJ) from the base paper's comparison table, demonstrating the protocol's energy advantage.
 
 ### Graph 4: Communication Cost vs Number of Nodes (`output_comm_cost.png`)
 
@@ -398,7 +398,7 @@ Total message size per authentication: ID (64 bits) + Nonce (64 bits) + Timestam
 
 ![Comparison with Prior Schemes](output_comparison.png)
 
-Side-by-side comparison of 6 schemes from the paper. Left panel: computational cost on a log scale (Ref [23] at 75 ms vs proposed at 0.4 ms, a 189x improvement). Right panel: communication overhead in bits. The proposed protocol (green bars) achieves the lowest values in both metrics.
+Side-by-side comparison of 6 schemes from the paper. Left panel: computational cost on a log scale (baseline scheme Ref [23] at 75 ms vs proposed at 0.4 ms, a 189x improvement). Right panel: communication overhead in bits. The proposed protocol (green bars) achieves the lowest values in both metrics.
 
 ### Graph 6: Throughput vs Number of Nodes (`output_throughput.png`)
 
@@ -415,6 +415,11 @@ Percentage battery remaining after all simulation rounds. Active nodes (U1, S1, 
 ---
 
 ## Performance Comparison
+
+Important note on labels used below:
+- Ref [21] to Ref [25] are scheme IDs exactly as used in the base paper's internal comparison table.
+- They are not the same as this README bibliography numbering (which is limited to 5 references at the end).
+- In the `vs Proposed` column, `baseline` means the proposed scheme is the denominator for relative comparison. Example: `+42% = (3008 - 2112) / 2112`.
 
 ### Communication Cost (bits per full authentication cycle)
 
@@ -516,12 +521,19 @@ This will:
 
 Scyther is used to formally verify that the authentication protocol is secure against all known attack patterns under the Dolev-Yao attacker model.
 
-### Step 1: Install Scyther
+### Step 1: Use Bundled Scyther (No Separate Download)
 
-1. Download Scyther from: https://people.cispa.io/cas.cremers/scyther/
-   - Get **scyther-w32-v1.3.0.zip** (Windows 32-bit binary, works on 64-bit Windows)
-2. Extract the zip to a directory (e.g., `scyther/scyther-w32-v1.3.0/`)
-3. Install Python dependency for the GUI:
+1. Scyther is already bundled in this repository at `scyther/scyther-w32-v1.3.0/`.
+2. Open the bundled GUI from the project root:
+  ```bash
+  cd scyther/scyther-w32-v1.3.0
+  py scyther-gui.py
+  ```
+  Or simply run:
+  ```bash
+  .\launch_scyther_gui.bat
+  ```
+3. If the GUI dependency is missing, install:
    ```bash
    pip install wxPython
    ```
@@ -532,19 +544,20 @@ Scyther is used to formally verify that the authentication protocol is secure ag
 
 ### Step 2: Verify via GUI
 
-1. Open the Scyther GUI:
-   ```bash
-   python scyther-gui.py
-   ```
-2. Go to **File -> Open** and select `uwc_protocol.spdl`
-3. Set **max number of runs** to **5** in the settings
-4. Click **Verify** (or press F5)
-5. All 32 claims should show **Ok** with "proof of correctness"
+1. In Scyther GUI, go to **File -> Open** and select `../../uwc_protocol.spdl`
+2. Set **max number of runs** to **5** in the settings
+3. Click **Verify** (or press F5)
+4. All 32 claims should show **Ok** with "proof of correctness"
+
+### GUI Verification Output (All Claims OK)
+
+![Scyther GUI Method: All Claims OK](main-output.png)
 
 ### Step 3: Verify via Command Line
 
 ```bash
-scyther-w32.exe --max-runs=5 uwc_protocol.spdl
+cd scyther/scyther-w32-v1.3.0
+.\Scyther\scyther-w32.exe --max-runs=5 ..\..\uwc_protocol.spdl
 ```
 
 Expected output: 32 lines, each ending with `Ok [proof of correctness]`. Execution time: under 1 second.
@@ -569,13 +582,17 @@ authentication-secure-underwater-protocol/
 |-- uwc_protocol.spdl          Scyther SPDL specification (32/32 claims pass)
 |-- requirements.txt            Python dependencies
 |-- README.md                   This file
+|-- launch_scyther_gui.bat      One-click launcher for bundled Scyther GUI
 |-- A_Novel_and_Robust_Authentication_Protocol_for_Secure_Underwater_Communication_Systems.pdf
 |                               Base paper (IEEE IoT Journal, 2025)
+|-- scyther/                    Bundled Scyther distribution
+|   |-- scyther-w32-v1.3.0/     GUI + backend binaries and protocol tooling
+|-- main-output.png             GUI verification output (all claims OK)
 |-- output_topology.png         Network topology graph
 |-- output_delay.png            Delay vs nodes (Thorp model)
 |-- output_energy.png           Energy vs nodes with reference lines
 |-- output_comm_cost.png        Communication cost vs nodes + prior scheme comparison
-|-- output_comparison.png       Bar charts: proposed vs Ref [21]-[25]
+|-- output_comparison.png       Bar charts: proposed vs baseline schemes (paper Ref [21]-[25])
 |-- output_throughput.png       Authentication throughput vs scale
 |-- output_battery.png          Battery level per node after simulation
 ```
