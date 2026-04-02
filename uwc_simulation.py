@@ -306,19 +306,31 @@ def sv(fname):
 G2  = nx.Graph(); G2.add_edges_from(edges)
 cm2 = {"U1":"#3498db","U2":"#3498db","S1":"#2ecc71","B1":"#e74c3c","B2":"#2ecc71",
        "SAT1":"#9b59b6","SAT2":"#9b59b6","BS":"#f39c12"}
-pos = nx.spring_layout(G2, seed=42)
-fig, ax = plt.subplots(figsize=(9,6))
+pos = {
+    "U1":   (0.35, 1.00), "U2":  (0.65, 1.00),   # Layer 1: UWS sensors
+    "S1":   (0.50, 0.72),                          # Layer 2: Submarine
+    "B1":   (0.18, 0.44), "B2":  (0.70, 0.44),    # Layer 3: Buoys (B1 failed, B2 active)
+    "SAT1": (0.08, 0.16), "SAT2":(0.62, 0.16),    # Layer 4: Satellites
+    "BS":   (1.00, 0.00),                          # Layer 5: Base Station
+}
+fig, ax = plt.subplots(figsize=(10,7))
 nx.draw_networkx(G2, pos, ax=ax, node_color=[cm2.get(n,"#95a5a6") for n in G2.nodes()],
-                 node_size=900, font_size=10, font_weight="bold",
+                 node_size=1100, font_size=10, font_weight="bold",
                  edge_color="#7f8c8d", width=2, with_labels=True)
-ax.set_title("UWC Network Topology (Red=Failed B1)", fontsize=12, fontweight="bold")
+# Highlight active routing path U1->S1->B2->SAT2->BS
+active_edges = [("U1","S1"), ("S1","B2"), ("B2","SAT2"), ("SAT2","BS")]
+nx.draw_networkx_edges(G2, pos, edgelist=active_edges, ax=ax,
+                       edge_color="#27ae60", width=3.5, style="solid", alpha=0.8)
+ax.set_title("UWC Network Topology | Active Path: U1/U2 -> S1 -> B2 -> SAT2 -> BS\n(Red=Failed B1, Green edges=Active Authentication Route)",
+             fontsize=11, fontweight="bold")
 ax.legend(handles=[
     mpatches.Patch(color="#3498db", label="UWS (Underwater Sensors)"),
-    mpatches.Patch(color="#2ecc71", label="Active (SUB/BUOY/BS)"),
+    mpatches.Patch(color="#2ecc71", label="Active (SUB/BUOY)"),
     mpatches.Patch(color="#e74c3c", label="Failed Node (B1)"),
     mpatches.Patch(color="#9b59b6", label="Satellite"),
-    mpatches.Patch(color="#f39c12", label="Base Station"),
-], loc="lower left", fontsize=8)
+    mpatches.Patch(color="#f39c12", label="Base Station (BS)"),
+    mpatches.Patch(color="#27ae60", label="Active Auth Path"),
+], loc="upper left", fontsize=8)
 sv("output_topology.png")
 
 # Graph 2: Delay with Thorp model
