@@ -90,19 +90,26 @@ The protocol defines a 5-layer hierarchical network:
 ```
 
 ```
-[U1]---+                              +---[SAT1]---+
-       +---[S1]---[B1(FAILED)]--------+            +---[BS]
-[U2]---+          |---[B2]----------[SAT2]----------+
+Layer 1 (UWS):   [U1]──┐
+                        ├──[S1]──[B1 FAILED]──[SAT1]──┐
+Layer 2 (SUB):  [U2]──┘    \                           ├──[BS]
+                             └──[B2]──────[SAT2]───────┘
+Layer 3 (BUOY):       (failed)    (active)
+Layer 4 (SAT):                             SAT1 dead, SAT2 active
+Layer 5 (BS):                                            ↑ destination
 ```
+
+**Active authentication path (B1 failed, fallback to B2):**
+`U1 -> S1 -> B2 -> SAT2 -> BS`
 
 **Node roles in topology:**
 - **UWS (U1, U2):** Underwater sensors deployed on the ocean floor, collecting environmental data
 - **SUB (S1):** Submarine or AUV acting as a mobile relay between sensors and surface
-- **BUOY (B1, B2):** Surface buoys relaying data from underwater to satellite. B1 is modelled as failed; B2 is the active fallback
-- **SAT (SAT1, SAT2):** Satellites providing the link between surface buoys and the terrestrial base station
-- **BS:** Base station on land, the final destination for authenticated data
+- **BUOY (B1, B2):** Surface buoys relaying data from underwater to satellite. B1 is modelled as failed (red); B2 is the active fallback (green), connected onward to SAT2
+- **SAT (SAT1, SAT2):** Satellites. SAT1 is on the failed B1 path; SAT2 is on the active B2 path. Both connect to BS
+- **BS:** Base station on land, the final destination for authenticated data (orange node)
 
-The protocol includes a **dynamic fallback mechanism**: when B1 fails, traffic automatically routes through B2 without restarting the session.
+The protocol includes a **dynamic fallback mechanism**: when B1 fails, traffic automatically routes S1 -> B2 -> SAT2 -> BS without restarting the session.
 
 ---
 
@@ -370,7 +377,7 @@ Comm Cost: 296 bits | Energy: 48.8 uJ
 
 ![Network Topology](output_topology.png)
 
-Shows the 8-node hierarchical network with color-coded node states. B1 is marked as failed (red); B2 is the active fallback (green). The graph demonstrates the automatic failover routing path: U1 -> S1 -> B2 -> SAT1 -> BS.
+Shows the 8-node hierarchical network in a layered layout with color-coded node states. B1 is marked as failed (red); B2 is the active fallback (green). The thick green edges highlight the active authentication route: **U1 -> S1 -> B2 -> SAT2 -> BS**. B1's dead path (S1 -> B1 -> SAT1) is shown in grey. BS (orange) is at the bottom right as the data collection endpoint.
 
 ### Graph 2: Authentication Delay vs Number of Nodes (`output_delay.png`)
 
@@ -617,15 +624,43 @@ authentication-secure-underwater-protocol/
 
 ## References
 
-[1] C. Rupa, M. Karuppiah, Y. Ko, M. K. Khan, and H. I. S. Awal, "A Novel and Robust Authentication Protocol for Secure Underwater Communication Systems," *IEEE Internet of Things Journal*, vol. 12, no. 22, pp. 47519-47531, Nov. 2025. DOI: [10.1109/JIOT.2025.3601984](https://doi.org/10.1109/JIOT.2025.3601984)
+**Base Paper**
 
-[2] T. Camp, J. Boleng, and V. Davies, "A Survey of Mobility Models for Ad Hoc Network Research," *Wireless Communications and Mobile Computing*, vol. 2, no. 5, pp. 483-502, 2002. DOI: [10.1002/wcm.72](https://doi.org/10.1002/wcm.72)
+[1] C. Rupa, M. Karuppiah, Y. Ko, M. K. Khan, and H. I. S. Awal, "A Novel and Robust Authentication Protocol for Secure Underwater Communication Systems," *IEEE Internet of Things Journal*, vol. 12, no. 22, pp. 47519-47531, Nov. 2025. DOI: [10.1109/JIOT.2025.3601984](https://ieeexplore.ieee.org/document/11134400)
 
-[3] A. Khraisat, I. Gondal, P. Vamplew, and J. Kamruzzaman, "Survey of Intrusion Detection Systems: Techniques, Datasets and Challenges," *Cybersecurity*, vol. 2, no. 1, pp. 1-22, 2019. DOI: [10.1109/ACCESS.2019.2895334](https://doi.org/10.1109/ACCESS.2019.2895334)
+**Underwater Communication and Channel Models**
 
-[4] D. Dolev and A. Yao, "On the Security of Public Key Protocols," *IEEE Transactions on Information Theory*, vol. 29, no. 2, pp. 198-208, 1983. DOI: [10.1109/TIT.1983.1056650](https://doi.org/10.1109/TIT.1983.1056650)
+[2] W. H. Thorp, "Deep-Ocean Sound Attenuation in the Sub- and Low-Kilocycle-per-Second Region," *Journal of the Acoustical Society of America*, vol. 38, no. 4, pp. 648-654, 1965. DOI: [10.1121/1.1909741](https://doi.org/10.1121/1.1909741)
 
-[5] C. J. F. Cremers, "The Scyther Tool: Verification, Falsification, and Analysis of Security Protocols," *Computer Aided Verification (CAV)*, 2008. DOI: [10.1007/978-3-540-70545-1_38](https://doi.org/10.1007/978-3-540-70545-1_38)
+[3] M. Stojanovic, "On the Relationship Between Capacity and Distance in an Underwater Acoustic Communication Channel," *ACM SIGMOBILE Mobile Computing and Communications Review*, vol. 11, no. 4, pp. 34-43, 2007. DOI: [10.1145/1347364.1347373](https://doi.org/10.1145/1347364.1347373)
+
+[4] I. F. Akyildiz, D. Pompili, and T. Melodia, "Underwater Acoustic Sensor Networks: Research Challenges," *Ad Hoc Networks*, vol. 3, no. 3, pp. 257-279, 2005. DOI: [10.1016/j.adhoc.2005.01.004](https://doi.org/10.1016/j.adhoc.2005.01.004)
+
+[5] R. J. Urick, *Principles of Underwater Sound*, 3rd ed. New York: McGraw-Hill, 1983.
+
+**Security Protocols and Formal Verification**
+
+[6] D. Dolev and A. C. Yao, "On the Security of Public Key Protocols," *IEEE Transactions on Information Theory*, vol. 29, no. 2, pp. 198-208, 1983. DOI: [10.1109/TIT.1983.1056650](https://doi.org/10.1109/TIT.1983.1056650)
+
+[7] G. Lowe, "Breaking and Fixing the Needham-Schroeder Public-Key Protocol Using FDR," in *Proc. Tools and Algorithms for the Construction and Analysis of Systems (TACAS)*, pp. 147-166, 1996. DOI: [10.1007/3-540-61042-1_43](https://doi.org/10.1007/3-540-61042-1_43)
+
+[8] R. Needham and M. Schroeder, "Using Encryption for Authentication in Large Networks of Computers," *Communications of the ACM*, vol. 21, no. 12, pp. 993-999, 1978. DOI: [10.1145/359657.359659](https://doi.org/10.1145/359657.359659)
+
+[9] M. Burrows, M. Abadi, and R. Needham, "A Logic of Authentication," *ACM Transactions on Computer Systems*, vol. 8, no. 1, pp. 18-36, 1990. DOI: [10.1145/77648.77649](https://doi.org/10.1145/77648.77649)
+
+[10] C. J. F. Cremers, "The Scyther Tool: Verification, Falsification, and Analysis of Security Protocols," in *Proc. Computer Aided Verification (CAV)*, LNCS vol. 5123, pp. 414-418, 2008. DOI: [10.1007/978-3-540-70545-1_38](https://doi.org/10.1007/978-3-540-70545-1_38). Tool: [people.cispa.io/cas.cremers/scyther](https://people.cispa.io/cas.cremers/scyther/)
+
+**Cryptography**
+
+[11] NIST, "Recommendation for Block Cipher Modes of Operation: Galois/Counter Mode (GCM) and GMAC," NIST SP 800-38D, 2007. Available: [csrc.nist.gov/publications/detail/sp/800-38d/final](https://csrc.nist.gov/publications/detail/sp/800-38d/final)
+
+[12] V. S. Miller, "Use of Elliptic Curves in Cryptography," in *Advances in Cryptology (CRYPTO)*, LNCS vol. 218, pp. 417-426, 1986. DOI: [10.1007/3-540-39799-X_31](https://doi.org/10.1007/3-540-39799-X_31)
+
+**Mobility and Anomaly Detection**
+
+[13] T. Camp, J. Boleng, and V. Davies, "A Survey of Mobility Models for Ad Hoc Network Research," *Wireless Communications and Mobile Computing*, vol. 2, no. 5, pp. 483-502, 2002. DOI: [10.1002/wcm.72](https://doi.org/10.1002/wcm.72)
+
+[14] A. Khraisat, I. Gondal, P. Vamplew, and J. Kamruzzaman, "Survey of Intrusion Detection Systems: Techniques, Datasets and Challenges," *Cybersecurity*, vol. 2, no. 20, 2019. DOI: [10.1186/s42400-019-0038-7](https://doi.org/10.1186/s42400-019-0038-7)
 
 ---
 
