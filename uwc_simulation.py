@@ -321,7 +321,7 @@ nx.draw_networkx(G2, pos, ax=ax, node_color=[cm2.get(n,"#95a5a6") for n in G2.no
 active_edges = [("U1","S1"), ("S1","B2"), ("B2","SAT2"), ("SAT2","BS")]
 nx.draw_networkx_edges(G2, pos, edgelist=active_edges, ax=ax,
                        edge_color="#27ae60", width=3.5, style="solid", alpha=0.8)
-ax.set_title("UWC Network Topology — Active Path: U1/U2 -> S1 -> B2 -> SAT2 -> BS\n(Red=Failed B1, Green Path=Active Authentication Route)",
+ax.set_title("UWC Network Topology | Active Path: U1/U2 -> S1 -> B2 -> SAT2 -> BS\n(Red=Failed B1, Green edges=Active Authentication Route)",
              fontsize=11, fontweight="bold")
 ax.legend(handles=[
     mpatches.Patch(color="#3498db", label="UWS (Underwater Sensors)"),
